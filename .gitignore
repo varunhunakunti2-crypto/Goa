@@ -22,3 +22,15 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# Agent configuration & scratch files
+.agents/
+.claude/
+.kilocode/
+skills/
+skills-lock.json
+
+# wrangler / cloudflare temp files
+.wrangler/
+worker-configuration.d.ts
+
