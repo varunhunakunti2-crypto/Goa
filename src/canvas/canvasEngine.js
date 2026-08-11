@@ -84,28 +84,183 @@ export function getFunTitle(role) {
   return list[hash % list.length];
 }
 
+// Draw text along an arc
+function drawTextAlongArc(ctx, str, centerX, centerY, radius, angle, above = true) {
+  ctx.save();
+  ctx.translate(centerX, centerY);
+  const chars = str.split('');
+  const totalSpread = 1.3; // radians
+  const startAngle = angle - totalSpread / 2;
+  const angleStep = totalSpread / (chars.length - 1);
+  
+  for (let i = 0; i < chars.length; i++) {
+    const charAngle = startAngle + i * angleStep;
+    ctx.save();
+    ctx.rotate(charAngle);
+    ctx.translate(0, above ? -radius : radius);
+    if (!above) {
+      ctx.rotate(Math.PI);
+    }
+    ctx.fillText(chars[i], 0, 0);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+// Draw a stylized palm tree on canvas
+function drawPalmTree(ctx, x, y, scale = 1, color = "#F4C400") {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  
+  // Trunk
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 6;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(0, 100);
+  ctx.quadraticCurveTo(-15, 40, -5, 0);
+  ctx.stroke();
+
+  // Leaves/Fronds
+  ctx.fillStyle = color;
+  const frondPaths = [
+    // Top-left frond
+    [-5, 0, -40, -20, -60, -10, -5, 0],
+    // Top-right frond
+    [-5, 0, 30, -25, 55, -20, -5, 0],
+    // Mid-left frond
+    [-5, 0, -50, 0, -70, 20, -5, 0],
+    // Mid-right frond
+    [-5, 0, 40, 5, 60, 30, -5, 0],
+    // Top frond
+    [-5, 0, -10, -40, 0, -60, -5, 0]
+  ];
+
+  frondPaths.forEach(p => {
+    ctx.beginPath();
+    ctx.moveTo(p[0], p[1]);
+    ctx.quadraticCurveTo(p[2], p[3], p[4], p[5]);
+    ctx.quadraticCurveTo(p[2] + 5, p[3] + 5, p[6], p[7]);
+    ctx.fill();
+  });
+
+  ctx.restore();
+}
+
+// Draw a stylized hibiscus flower
+function drawFlower(ctx, x, y, size = 20, petalandCenterColor = "#E51E69", leafColor = "#F4C400") {
+  ctx.save();
+  ctx.translate(x, y);
+  
+  // Petals
+  ctx.fillStyle = petalandCenterColor;
+  for (let i = 0; i < 5; i++) {
+    ctx.rotate((Math.PI * 2) / 5);
+    ctx.beginPath();
+    ctx.ellipse(0, -size / 1.5, size / 1.8, size / 1.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Center core
+  ctx.fillStyle = leafColor;
+  ctx.beginPath();
+  ctx.arc(0, 0, size / 3, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Pistil
+  ctx.strokeStyle = leafColor;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(size, -size);
+  ctx.stroke();
+  
+  ctx.restore();
+}
+
+// Draw the Goa Landscape (Waves, sun, house/shack, palm tree)
+function drawGoaLandscape(ctx, x, y, width, height) {
+  ctx.save();
+  // Draw card/badge background
+  ctx.fillStyle = "#062E22"; // Deep Green
+  ctx.strokeStyle = "#F4C400"; // Golden Yellow
+  ctx.lineWidth = 3;
+  drawRoundedRect(ctx, x, y, width, height, 16);
+  ctx.fill();
+  ctx.stroke();
+
+  // Clip content inside the landscape box
+  ctx.beginPath();
+  drawRoundedRect(ctx, x + 3, y + 3, width - 6, height - 6, 13);
+  ctx.closePath();
+  ctx.clip();
+
+  // 1. Draw Golden Sun
+  ctx.fillStyle = "#F4C400";
+  ctx.beginPath();
+  ctx.arc(x + width / 2 - 25, y + height - 20, 30, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 2. Draw Ocean Waves
+  ctx.strokeStyle = "#E51E69"; // Pink
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  for (let i = 0; i < width - 10; i++) {
+    const waveY = y + height - 15 + Math.sin(i * 0.05) * 5;
+    if (i === 0) ctx.moveTo(x + 5 + i, waveY);
+    else ctx.lineTo(x + 5 + i, waveY);
+  }
+  ctx.stroke();
+
+  // 3. Draw mini house/shack
+  ctx.fillStyle = "#FFFFFF";
+  ctx.strokeStyle = "#073F2B";
+  ctx.lineWidth = 2;
+  
+  // Base
+  ctx.beginPath();
+  ctx.rect(x + width - 65, y + height - 40, 35, 25);
+  ctx.fill();
+  ctx.stroke();
+  
+  // Roof
+  ctx.fillStyle = "#E51E69";
+  ctx.beginPath();
+  ctx.moveTo(x + width - 70, y + height - 40);
+  ctx.lineTo(x + width - 47, y + height - 60);
+  ctx.lineTo(x + width - 25, y + height - 40);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // 4. Mini Palm tree next to house
+  drawPalmTree(ctx, x + 35, y + height - 90, 0.45, "#F4C400");
+
+  ctx.restore();
+}
+
 /**
- * Draw Format A: PFP Circular Frame
+ * Draw Format A: PFP Circular Frame (1080x1080)
  */
-export async function renderPFPFrame(canvas, imageElement, crop, zoom = 1) {
+export async function renderPFPFrame(canvas, imageElement, crop) {
   const ctx = canvas.getContext('2d');
   const size = 1080;
   canvas.width = size;
   canvas.height = size;
 
-  // 1. Draw solid dark background for outer bounds (just in case)
-  ctx.fillStyle = "#171717";
+  // Clear background
+  ctx.fillStyle = "#062E22"; // Deep Green outer base
   ctx.fillRect(0, 0, size, size);
 
-  // 2. Draw user photo cropped & masked as a circle
+  // Draw user photo in circular mask
   ctx.save();
   ctx.beginPath();
-  ctx.arc(size / 2, size / 2, size / 2 - 20, 0, Math.PI * 2);
+  ctx.arc(size / 2, size / 2, 430, 0, Math.PI * 2);
   ctx.closePath();
   ctx.clip();
 
   if (imageElement && crop) {
-    // Draw cropped image
     const sourceX = imageElement.naturalWidth * (crop.x / 100);
     const sourceY = imageElement.naturalHeight * (crop.y / 100);
     const sourceWidth = imageElement.naturalWidth * (crop.width / 100);
@@ -117,152 +272,124 @@ export async function renderPFPFrame(canvas, imageElement, crop, zoom = 1) {
       sourceY,
       sourceWidth,
       sourceHeight,
-      20,
-      20,
-      size - 40,
-      size - 40
+      size / 2 - 430,
+      size / 2 - 430,
+      860,
+      860
     );
   } else {
-    // Placeholder background
-    ctx.fillStyle = "#262626";
+    ctx.fillStyle = "#073F2B";
     ctx.fillRect(0, 0, size, size);
+    
+    ctx.fillStyle = "rgba(244, 196, 0, 0.1)";
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, 200, 0, Math.PI * 2);
+    ctx.fill();
   }
   ctx.restore();
 
-  // 3. Draw beautiful circular frame overlays (Vercel-like border with mesh colors)
-  ctx.lineWidth = 24;
-  
-  // Mesh gradient for the outer ring border
-  const borderGradient = ctx.createSweepGradient
-    ? ctx.createSweepGradient(size / 2, size / 2, 0, Math.PI * 2)
-    : ctx.createLinearGradient(0, 0, size, size);
-    
-  borderGradient.addColorStop(0, '#007cf0'); // Develop Blue
-  borderGradient.addColorStop(0.3, '#00dfd8'); // Develop Teal
-  borderGradient.addColorStop(0.5, '#7928ca'); // Preview Violet
-  borderGradient.addColorStop(0.7, '#ff0080'); // Preview Pink
-  borderGradient.addColorStop(0.85, '#ff4d4d'); // Ship Coral
-  borderGradient.addColorStop(1, '#f9cb28'); // Ship Amber
-
-  ctx.strokeStyle = borderGradient;
+  // 1. Draw outer Green Ring (Forest Green border)
+  ctx.lineWidth = 55;
+  ctx.strokeStyle = "#073F2B"; // Forest Green
   ctx.beginPath();
-  ctx.arc(size / 2, size / 2, size / 2 - 12, 0, Math.PI * 2);
+  ctx.arc(size / 2, size / 2, 510, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Draw inner thin white border ring
-  ctx.lineWidth = 4;
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+  // 2. Draw thin inner Gold Ring
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = "#F4C400"; // Golden Yellow
   ctx.beginPath();
-  ctx.arc(size / 2, size / 2, size / 2 - 24, 0, Math.PI * 2);
+  ctx.arc(size / 2, size / 2, 478, 0, Math.PI * 2);
   ctx.stroke();
 
-  // 4. Add "HH GOA 2026" & "#FrameInGoa" banners at the bottom of the circle
-  // We draw a curved pill badge at the bottom
-  ctx.save();
-  ctx.translate(size / 2, size / 2);
-  
-  // Badge background at the bottom center
-  ctx.fillStyle = "#171717";
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
-  ctx.lineWidth = 3;
-  drawRoundedRect(ctx, -250, size / 2 - 140, 500, 70, 35);
-  ctx.fill();
-  ctx.stroke();
-
-  // Text: "HH GOA 2026" and "#FrameInGoa"
-  ctx.fillStyle = "#ffffff";
+  // 3. Top curved text: "HACKER HOUSE GOA 2026"
+  ctx.fillStyle = "#F4C400"; // Golden Yellow
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  
-  // Custom styled brand text
-  ctx.font = "bold 32px 'Geist', 'Inter', sans-serif";
-  ctx.fillText("HH GOA 2026  •  #FrameInGoa", 0, size / 2 - 105);
-  
-  ctx.restore();
+  ctx.font = "bold 38px 'Geist', 'Inter', sans-serif";
+  drawTextAlongArc(ctx, "HACKER HOUSE GOA 2026", size / 2, size / 2, 508, -Math.PI / 2, true);
+
+  // 4. Bottom curved text: "BUILD • SHIP • REPEAT"
+  ctx.fillStyle = "#FFFFFF"; // White text
+  ctx.font = "bold 36px 'Geist Mono', monospace";
+  drawTextAlongArc(ctx, "BUILD • SHIP • REPEAT", size / 2, size / 2, 508, Math.PI / 2, false);
+
+  // 5. Draw Palm trees on the sides (mid-left & mid-right)
+  drawPalmTree(ctx, 110, 480, 0.7, "#F4C400"); // Left Palm
+  drawPalmTree(ctx, 970, 480, 0.7, "#F4C400"); // Right Palm
+
+  // 6. Draw decorative flowers at lower transitions
+  drawFlower(ctx, 175, 780, 24, "#E51E69", "#F4C400"); // Lower-left flower
+  drawFlower(ctx, 905, 780, 24, "#E51E69", "#F4C400"); // Lower-right flower
+
+  // 7. Draw small pink accent stars/sparkles on the rings
+  const drawSparkle = (cx, cy) => {
+    ctx.fillStyle = "#E51E69"; // Pink
+    ctx.beginPath();
+    ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#FFFFFF";
+    ctx.beginPath();
+    ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  drawSparkle(260, 260); // Top-left sparkle
+  drawSparkle(820, 260); // Top-right sparkle
+
+  // 8. Bottom Center Goa Landscape Badge (sun, shack, wave, palm)
+  drawGoaLandscape(ctx, size / 2 - 130, size - 170, 260, 110);
 }
 
 /**
- * Draw Format B: Builder ID Card
+ * Draw Format B: Builder ID Card (1600x900)
  */
 export async function renderIDCard(canvas, imageElement, crop, name = "Verified Builder", role = "Hacker", title = "") {
   const ctx = canvas.getContext('2d');
-  const width = 800;
-  const height = 1200;
+  const width = 1600;
+  const height = 900;
   canvas.width = width;
   canvas.height = height;
 
-  // 1. Dark background
-  ctx.fillStyle = "#171717";
+  // 1. Clear background & Draw Deep Green base
+  ctx.fillStyle = "#062E22"; // Deep Green
   ctx.fillRect(0, 0, width, height);
 
-  // 2. Draw mesh gradient decorative accents (background glow)
-  const glow1 = ctx.createRadialGradient(0, 0, 10, 0, 0, 500);
-  glow1.addColorStop(0, 'rgba(0, 112, 243, 0.15)'); // Blue
-  glow1.addColorStop(1, 'transparent');
-  ctx.fillStyle = glow1;
+  // 2. Draw dual-glow mesh background
+  const meshGlow1 = ctx.createRadialGradient(width, 0, 100, width, 0, 800);
+  meshGlow1.addColorStop(0, "rgba(229, 30, 105, 0.15)"); // Pink
+  meshGlow1.addColorStop(1, "transparent");
+  ctx.fillStyle = meshGlow1;
   ctx.fillRect(0, 0, width, height);
 
-  const glow2 = ctx.createRadialGradient(width, 300, 10, width, 300, 600);
-  glow2.addColorStop(0, 'rgba(121, 40, 202, 0.12)'); // Violet
-  glow2.addColorStop(1, 'transparent');
-  ctx.fillStyle = glow2;
+  const meshGlow2 = ctx.createRadialGradient(0, height, 100, 0, height, 800);
+  meshGlow2.addColorStop(0, "rgba(244, 196, 0, 0.12)"); // Yellow
+  meshGlow2.addColorStop(1, "transparent");
+  ctx.fillStyle = meshGlow2;
   ctx.fillRect(0, 0, width, height);
 
-  const glow3 = ctx.createRadialGradient(width / 2, height, 10, width / 2, height, 600);
-  glow3.addColorStop(0, 'rgba(80, 227, 194, 0.15)'); // Cyan
-  glow3.addColorStop(1, 'transparent');
-  ctx.fillStyle = glow3;
-  ctx.fillRect(0, 0, width, height);
+  // 3. Draw Gold Outer Border & Pink Hairline Border
+  ctx.lineWidth = 12;
+  ctx.strokeStyle = "#F4C400"; // Golden Yellow
+  ctx.strokeRect(6, 6, width - 12, height - 12);
 
-  // 3. Draw a premium card hairline border
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
-  ctx.strokeRect(30, 30, width - 60, height - 60);
-
-  // Corner tech ticks/crosshairs
   ctx.lineWidth = 2;
-  ctx.strokeStyle = "#0070f3";
-  // Top-left corner tick
-  ctx.beginPath();
-  ctx.moveTo(25, 45); ctx.lineTo(45, 45); ctx.lineTo(45, 25);
-  ctx.stroke();
-  // Bottom-right corner tick
-  ctx.beginPath();
-  ctx.moveTo(width - 25, height - 45); ctx.lineTo(width - 45, height - 45); ctx.lineTo(width - 45, height - 25);
-  ctx.stroke();
+  ctx.strokeStyle = "#E51E69"; // Pink Hairline
+  ctx.strokeRect(20, 20, width - 40, height - 40);
 
-  // 4. Header: "HH GOA 2026"
-  ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-  ctx.font = "14px 'Geist Mono', monospace";
-  ctx.fillText("BUILDER IDENTITY ACCESS CARD", 50, 70);
+  // 4. Draw User Photo on the Left Side
+  const imgSize = 540;
+  const imgX = 100;
+  const imgY = (height - imgSize) / 2 - 20;
 
-  // Brand Logo Text
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 32px 'Geist', sans-serif";
-  ctx.fillText("HACKHIND GOA", 50, 115);
-
-  // Top header gradient accent line
-  const gradLine = ctx.createLinearGradient(50, 135, width - 50, 135);
-  gradLine.addColorStop(0, '#007cf0');
-  gradLine.addColorStop(0.5, '#7928ca');
-  gradLine.addColorStop(1, '#ff0080');
-  ctx.fillStyle = gradLine;
-  ctx.fillRect(50, 135, width - 100, 3);
-
-  // 5. User Photo with double border
-  const imgSize = 320;
-  const imgX = (width - imgSize) / 2;
-  const imgY = 190;
-
-  // Background card shadow glow
   ctx.save();
-  ctx.fillStyle = "#262626";
-  drawRoundedRect(ctx, imgX - 10, imgY - 10, imgSize + 20, imgSize + 20, 16);
+  // Draw photo background/shadow frame
+  ctx.fillStyle = "#073F2B";
+  drawRoundedRect(ctx, imgX - 10, imgY - 10, imgSize + 20, imgSize + 20, 24);
   ctx.fill();
 
-  // Mask & Draw Photo
+  // Photo Mask
   ctx.beginPath();
-  drawRoundedRect(ctx, imgX, imgY, imgSize, imgSize, 12);
+  drawRoundedRect(ctx, imgX, imgY, imgSize, imgSize, 16);
   ctx.closePath();
   ctx.clip();
 
@@ -274,141 +401,93 @@ export async function renderIDCard(canvas, imageElement, crop, name = "Verified 
 
     ctx.drawImage(imageElement, sourceX, sourceY, sourceWidth, sourceHeight, imgX, imgY, imgSize, imgSize);
   } else {
-    // Dark avatar placeholder
-    ctx.fillStyle = "#1e1e1e";
+    // Dark Placeholder inside photo card
+    ctx.fillStyle = "#062E22";
     ctx.fillRect(imgX, imgY, imgSize, imgSize);
-    
-    // Draw generic avatar icon
-    ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+    ctx.fillStyle = "rgba(244, 196, 0, 0.05)";
     ctx.beginPath();
-    ctx.arc(imgX + imgSize/2, imgY + imgSize/2 - 20, 60, 0, Math.PI*2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(imgX + imgSize/2, imgY + imgSize/2 + 130, 110, Math.PI, Math.PI*2);
+    ctx.arc(imgX + imgSize/2, imgY + imgSize/2, 100, 0, Math.PI*2);
     ctx.fill();
   }
   ctx.restore();
 
-  // Photo frame border
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+  // Photo Frame Border
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = "#F4C400";
   ctx.beginPath();
-  drawRoundedRect(ctx, imgX, imgY, imgSize, imgSize, 12);
+  drawRoundedRect(ctx, imgX, imgY, imgSize, imgSize, 16);
   ctx.stroke();
 
-  // 6. User Name
-  ctx.fillStyle = "#ffffff";
-  ctx.textAlign = "center";
-  ctx.font = "bold 44px 'Geist', sans-serif";
-  ctx.fillText(name, width / 2, 570);
+  // 5. Top-Right Header: "HACKER HOUSE GOA 2026"
+  ctx.fillStyle = "#FFFFFF";
+  ctx.textAlign = "left";
+  ctx.font = "bold 65px 'Geist', sans-serif";
+  ctx.fillText("HACKER HOUSE GOA 2026", 720, 130);
 
-  // 7. Stack/Role Pill Badge
-  ctx.save();
-  ctx.font = "500 18px 'Geist', sans-serif";
-  const badgeText = (role || "BUILDER").toUpperCase();
-  const textWidth = ctx.measureText(badgeText).width;
-  const paddingX = 24;
-  const paddingY = 10;
-  const badgeW = textWidth + paddingX * 2;
-  const badgeH = 18 + paddingY * 2;
-  const badgeX = (width - badgeW) / 2;
-  const badgeY = 605;
+  // Goa illustration next to the header
+  drawGoaLandscape(ctx, 1260, 45, 200, 110);
 
-  // Draw pill background
-  ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
-  ctx.lineWidth = 1;
-  drawRoundedRect(ctx, badgeX, badgeY, badgeW, badgeH, badgeH / 2);
+  // Divider Line
+  const divGrad = ctx.createLinearGradient(720, 175, width - 100, 175);
+  divGrad.addColorStop(0, "#F4C400");
+  divGrad.addColorStop(0.5, "#E51E69");
+  divGrad.addColorStop(1, "transparent");
+  ctx.fillStyle = divGrad;
+  ctx.fillRect(720, 175, width - 820, 3);
+
+  // 6. Meta Fields: Name, Stack/Role, and Builder Title
+  
+  // A. Name Field
+  ctx.fillStyle = "#F4C400";
+  ctx.font = "bold 14px 'Geist Mono', monospace";
+  ctx.fillText("BUILDER NAME //", 720, 240);
+
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = "bold 55px 'Geist', sans-serif";
+  ctx.fillText(name || "Verified Builder", 720, 305);
+
+  // B. Stack/Role Field
+  ctx.fillStyle = "#F4C400";
+  ctx.font = "bold 14px 'Geist Mono', monospace";
+  ctx.fillText("PRIMARY STACK //", 720, 390);
+
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = "bold 38px 'Geist', sans-serif";
+  ctx.fillText(role.toUpperCase(), 720, 445);
+
+  // C. Dynamic Fun Title Field
+  ctx.fillStyle = "#E51E69";
+  ctx.font = "bold 14px 'Geist Mono', monospace";
+  ctx.fillText("DYNAMIC BUILDER TITLE //", 720, 530);
+
+  const displayTitle = title || getFunTitle(role);
+  ctx.fillStyle = "#E51E69"; // Pink accent
+  ctx.font = "italic bold 44px 'Geist', sans-serif";
+  ctx.fillText(`"${displayTitle}"`, 720, 595);
+
+  // 7. Bottom Bar slogan and branding
+  const barY = 720;
+  const barHeight = 80;
+  const barWidth = width - 200;
+  const barX = 100;
+
+  // Background band
+  ctx.fillStyle = "#073F2B"; // Forest Green
+  ctx.strokeStyle = "rgba(244, 196, 0, 0.2)";
+  ctx.lineWidth = 2;
+  drawRoundedRect(ctx, barX, barY, barWidth, barHeight, 12);
   ctx.fill();
   ctx.stroke();
 
-  // Draw text
-  ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
-  ctx.fillText(badgeText, width / 2, badgeY + badgeH / 2 + 6);
-  ctx.restore();
-
-  // 8. Fun Title Section
-  const displayTitle = title || getFunTitle(role);
-  ctx.fillStyle = "#50e3c2"; // Mint cyan accent
-  ctx.font = "italic bold 30px 'Geist', sans-serif";
-  ctx.fillText(`"${displayTitle}"`, width / 2, 695);
-
-  // 9. Stats Grid in the bottom section
-  const statsY = 750;
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-  
-  // Horizontal grid dividers
-  ctx.beginPath();
-  ctx.moveTo(80, statsY); ctx.lineTo(width - 80, statsY);
-  ctx.moveTo(80, statsY + 100); ctx.lineTo(width - 80, statsY + 100);
-  ctx.moveTo(80, statsY + 200); ctx.lineTo(width - 80, statsY + 200);
-  ctx.stroke();
-
-  // Vertical grid dividers
-  ctx.beginPath();
-  ctx.moveTo(width / 2, statsY); ctx.lineTo(width / 2, statsY + 200);
-  ctx.stroke();
-
+  // Left text: "BUILD • SHIP • REPEAT"
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = "bold 26px 'Geist Mono', monospace";
   ctx.textAlign = "left";
-  ctx.font = "12px 'Geist Mono', monospace";
+  ctx.fillText("BUILD • SHIP • REPEAT", barX + 35, barY + barHeight / 2 + 8);
 
-  // Stat Cell 1
-  ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
-  ctx.fillText("LOCATION", 100, statsY + 30);
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 20px 'Geist', sans-serif";
-  ctx.fillText("Goa, India", 100, statsY + 65);
-
-  // Stat Cell 2
-  ctx.textAlign = "left";
-  ctx.font = "12px 'Geist Mono', monospace";
-  ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
-  ctx.fillText("ACCESS LEVEL", width / 2 + 40, statsY + 30);
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 20px 'Geist', sans-serif";
-  ctx.fillText("All-Access Hacker", width / 2 + 40, statsY + 65);
-
-  // Stat Cell 3
-  ctx.font = "12px 'Geist Mono', monospace";
-  ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
-  ctx.fillText("STATUS", 100, statsY + 130);
-  ctx.fillStyle = "#00dfd8"; // Cyan success
-  ctx.font = "bold 20px 'Geist', sans-serif";
-  ctx.fillText("VERIFIED BUILDER", 100, statsY + 165);
-
-  // Stat Cell 4
-  ctx.font = "12px 'Geist Mono', monospace";
-  ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
-  ctx.fillText("POWER LEVEL", width / 2 + 40, statsY + 130);
-  ctx.fillStyle = "#ff0080"; // Pink power
-  ctx.font = "bold 20px 'Geist', sans-serif";
-  ctx.fillText("9000+", width / 2 + 40, statsY + 165);
-
-  // 10. Card Footer: Tech Details & Barcode & Hashtag
-  const footerY = 1040;
-  
-  // Barcode decoration
-  ctx.fillStyle = "#ffffff";
-  const barcodeX = 80;
-  const barcodeY = footerY;
-  const barcodeHeight = 60;
-  
-  // Pseudo random barcode widths for visual realism
-  const barcodePattern = [2, 6, 2, 4, 1, 8, 3, 2, 6, 2, 4, 1, 8, 3, 1, 4, 2, 6, 3, 10, 2, 1, 6, 4];
-  let curX = barcodeX;
-  ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-  for (let w of barcodePattern) {
-    ctx.fillRect(curX, barcodeY, w, barcodeHeight);
-    curX += w + 3;
-  }
-
-  // Right side details
+  // Right text: "#FrameInGoa"
+  ctx.fillStyle = "#F4C400";
+  ctx.font = "bold 28px 'Geist', sans-serif";
   ctx.textAlign = "right";
-  ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-  ctx.font = "12px 'Geist Mono', monospace";
-  ctx.fillText("SYS.REF // HH-GOA-2026", width - 80, footerY + 15);
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 22px 'Geist', sans-serif";
-  ctx.fillText("#FrameInGoa", width - 80, footerY + 50);
+  ctx.fillText("#FrameInGoa", barX + barWidth - 35, barY + barHeight / 2 + 8);
 }

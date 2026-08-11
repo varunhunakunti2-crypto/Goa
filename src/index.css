@@ -1,18 +1,29 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #171717;
-  --color-on-primary: #ffffff;
-  --color-ink: #171717;
-  --color-body: #4d4d4d;
-  --color-mute: #888888;
-  --color-hairline: #ebebeb;
-  --color-hairline-strong: #a1a1a1;
-  --color-canvas: #ffffff;
-  --color-canvas-soft: #fafafa;
-  --color-canvas-soft-2: #f5f5f5;
-  --color-link: #0070f3;
-  --color-link-deep: #0761d1;
+  /* Brand color tokens */
+  --color-brand-forest: #073F2B;
+  --color-brand-deep: #062E22;
+  --color-brand-yellow: #F4C400;
+  --color-brand-gold: #DFAF00;
+  --color-brand-pink: #E51E69;
+  --color-brand-cream: #F7F1E3;
+  --color-brand-white: #FFFFFF;
+
+  /* Map to semantic utilities */
+  --color-primary: var(--color-brand-forest);
+  --color-on-primary: var(--color-brand-white);
+  --color-ink: var(--color-brand-deep);
+  --color-body: #204b3d; /* Deeper tinted slate-green for soft readability */
+  --color-mute: #588073; /* Muted green-gray for labels */
+  --color-hairline: #e3dbcb; /* Cream-darkened hairline borders */
+  --color-hairline-strong: #c2b7a3;
+  
+  --color-canvas: var(--color-brand-white);
+  --color-canvas-soft: var(--color-brand-cream);
+  --color-canvas-soft-2: #f0ebd8; /* Tinted Cream secondary background */
+  --color-link: var(--color-brand-pink);
+  --color-link-deep: #c41253;
   
   --font-sans: "Geist", "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
@@ -38,17 +49,19 @@ body,
   -webkit-font-smoothing: antialiased;
 }
 
+/* Beautiful on-brand mesh gradient using forest green, golden yellow, pink, and deep green */
 .mesh-gradient-bg {
-  background: radial-gradient(at 0% 0%, rgba(80, 227, 194, 0.12) 0px, transparent 50%),
-              radial-gradient(at 50% 0%, rgba(0, 112, 243, 0.12) 0px, transparent 50%),
-              radial-gradient(at 100% 0%, rgba(245, 166, 35, 0.12) 0px, transparent 50%),
-              radial-gradient(at 50% 100%, rgba(121, 40, 202, 0.12) 0px, transparent 50%);
+  background: radial-gradient(at 0% 0%, rgba(244, 196, 0, 0.18) 0px, transparent 50%),
+              radial-gradient(at 50% 0%, rgba(7, 63, 43, 0.15) 0px, transparent 55%),
+              radial-gradient(at 100% 0%, rgba(229, 30, 105, 0.15) 0px, transparent 50%),
+              radial-gradient(at 50% 100%, rgba(6, 46, 34, 0.2) 0px, transparent 60%);
+  background-color: var(--color-canvas-soft);
 }
 
 .custom-shadow-md {
-  box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.04), 0px 8px 8px -8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0px 2px 4px rgba(6, 46, 34, 0.05), 0px 8px 12px -8px rgba(6, 46, 34, 0.06);
 }
 
 .custom-shadow-lg {
-  box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.04), 0px 8px 16px -4px rgba(0, 0, 0, 0.04);
+  box-shadow: 0px 4px 6px rgba(6, 46, 34, 0.06), 0px 16px 24px -8px rgba(6, 46, 34, 0.08);
 }

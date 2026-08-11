@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import EasyCrop from 'react-easy-crop';
-import { Upload, Download, RefreshCw, Check, Sparkles, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Upload, ImageIcon, Sparkles, User, Briefcase, RefreshCw, CheckCircle2, Loader2, Download } from 'lucide-react';
 import { renderPFPFrame, renderIDCard, getFunTitle } from '../canvas/canvasEngine';
-import { supabase, uploadFrame } from './supabase';
 
 const ROLES = [
   { id: 'frontend', label: 'Frontend Engineer' },
@@ -14,27 +13,26 @@ const ROLES = [
 ];
 
 export default function FrameGenerator() {
-  const [activeTab, setActiveTab] = useState('pfp'); // 'pfp' or 'idcard'
+  const [format, setFormat] = useState('a'); // 'a' = PFP, 'b' = ID Card
   const [imageSrc, setImageSrc] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [shareLoading, setShareLoading] = useState(false);
   
   // Crop States
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
-  // Form States (for ID Card)
+  // Form states for Format B
   const [name, setName] = useState('');
   const [role, setRole] = useState('frontend');
-  const [funTitle, setFunTitle] = useState('');
-  
-  // Canvas References
+  const [customTitle, setCustomTitle] = useState('Pixel perfectionist');
+
+  // Canvas Refs
   const canvasRef = useRef(null);
   const fileInputRef = useRef(null);
   const [imgElement, setImgElement] = useState(null);
 
-  // Pre-load uploaded image element for Canvas drawing
+  // Load uploaded image element
   useEffect(() => {
     if (!imageSrc) {
       setImgElement(null);
@@ -51,10 +49,26 @@ export default function FrameGenerator() {
   // Set fun title whenever role changes
   useEffect(() => {
     const roleLabel = ROLES.find(r => r.id === role)?.label || 'Builder';
-    setFunTitle(getFunTitle(roleLabel));
+    setCustomTitle(getFunTitle(roleLabel));
   }, [role]);
 
-  // Handle file uploads, including client-side HEIC conversion
+  // Re-draw Canvas Preview
+  useEffect(() => {
+    if (!canvasRef.current) return;
+
+    const draw = async () => {
+      if (format === 'a') {
+        await renderPFPFrame(canvasRef.current, imgElement, croppedAreaPixels);
+      } else {
+        const roleLabel = ROLES.find(r => r.id === role)?.label || 'Builder';
+        await renderIDCard(canvasRef.current, imgElement, croppedAreaPixels, name || 'Verified Builder', roleLabel, customTitle);
+      }
+    };
+
+    draw();
+  }, [format, imgElement, croppedAreaPixels, name, role, customTitle]);
+
+  // Handle file uploads (including HEIC)
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -63,8 +77,13 @@ export default function FrameGenerator() {
     try {
       let processedFile = file;
 
-      // Handle HEIC/HEIF files
-      if (file.type === 'image/heic' || file.name.toLowerCase().endsWith('.heic') || file.type === 'image/heif') {
+      // HEIC/HEIF to JPEG conversion
+      if (
+        file.type === 'image/heic' || 
+        file.name.toLowerCase().endsWith('.heic') || 
+        file.name.toLowerCase().endsWith('.heif') || 
+        file.type === 'image/heif'
+      ) {
         const heic2any = (await import('heic2any')).default;
         const convertedBlob = await heic2any({
           blob: file,
@@ -82,7 +101,7 @@ export default function FrameGenerator() {
       reader.readAsDataURL(processedFile);
     } catch (err) {
       console.error('Error processing image:', err);
-      alert('Failed to process image. If it is a HEIC file, please try a standard JPEG/PNG or verify the file.');
+      alert('Failed to process image file. If it is an iPhone HEIC photo, please verify and try again.');
       setLoading(false);
     }
   };
@@ -91,108 +110,48 @@ export default function FrameGenerator() {
     setCroppedAreaPixels(croppedAreaPixels);
   };
 
-  // Re-draw Canvas on any state changes
-  useEffect(() => {
+  const handleDownload = () => {
     if (!canvasRef.current) return;
-    
-    const draw = async () => {
-      if (activeTab === 'pfp') {
-        await renderPFPFrame(canvasRef.current, imgElement, croppedAreaPixels);
-      } else {
-        const roleLabel = ROLES.find(r => r.id === role)?.label || 'Builder';
-        await renderIDCard(canvasRef.current, imgElement, croppedAreaPixels, name || 'Verified Builder', roleLabel, funTitle);
-      }
-    };
-
-    draw();
-  }, [activeTab, imgElement, croppedAreaPixels, name, role, funTitle]);
-
-  // Export Canvas to Blob
-  const getCanvasBlob = () => {
-    return new Promise((resolve) => {
-      if (!canvasRef.current) return resolve(null);
-      canvasRef.current.toBlob((blob) => {
-        resolve(blob);
-      }, 'image/png');
-    });
-  };
-
-  // Handle Download
-  const handleDownload = async () => {
-    const blob = await getCanvasBlob();
-    if (!blob) return;
-
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = activeTab === 'pfp' ? 'hh_goa_pfp.png' : 'hh_goa_builder_id.png';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  // Handle Upload to Supabase and Share on X
-  const handleShareToX = async () => {
-    setShareLoading(true);
-    try {
-      const blob = await getCanvasBlob();
-      if (!blob) {
-        setShareLoading(false);
-        return;
-      }
-
-      // Generate a unique ID for the shareable URL
-      const shareId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Upload to Supabase Storage
-      const publicUrl = await uploadFrame(blob, `${shareId}.png`);
-      
-      if (!publicUrl) {
-        throw new Error("Failed to upload image.");
-      }
-
-      // Pre-compose the Twitter post with hashtag and dynamic redirect preview URL
-      const shareUrl = `${window.location.origin}/share/${shareId}`;
-      const tweetText = `Just generated my HackHind Goa card! See you in Goa 🌴 #FrameInGoa\n\nCreate yours here:`;
-      const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(shareUrl)}`;
-      
-      window.open(xUrl, '_blank');
-    } catch (err) {
-      console.error(err);
-      alert("Could not prepare sharing. Download instead and upload to X!");
-    } finally {
-      setShareLoading(false);
-    }
+    canvasRef.current.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = format === 'a' ? 'hh_goa_pfp_frame.png' : 'hh_goa_builder_card.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 'image/png');
   };
 
   const handleRerollTitle = () => {
     const roleLabel = ROLES.find(r => r.id === role)?.label || 'Builder';
     const randomSalt = Math.random().toString();
-    setFunTitle(getFunTitle(roleLabel + randomSalt));
+    setCustomTitle(getFunTitle(roleLabel + randomSalt));
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 py-8">
-      {/* Tab Switcher */}
+    <div className="w-full max-w-5xl mx-auto px-4 py-6">
+      {/* Format Selector Toggle */}
       <div className="flex justify-center mb-8">
         <div className="inline-flex bg-canvas-soft-2 p-1 rounded-pill custom-shadow-sm border border-hairline">
           <button
-            onClick={() => { setActiveTab('pfp'); setImageSrc(null); }}
-            className={`px-6 py-2.5 rounded-pill text-sm font-medium transition-all ${
-              activeTab === 'pfp'
-                ? 'bg-primary text-on-primary shadow-sm'
-                : 'text-body hover:text-ink'
+            onClick={() => { setFormat('a'); setImageSrc(null); }}
+            className={`px-6 py-2.5 rounded-pill text-sm font-semibold transition-all cursor-pointer ${
+              format === 'a'
+                ? 'bg-brand-forest text-brand-white shadow-sm'
+                : 'text-mute hover:text-brand-forest'
             }`}
           >
             Format A: PFP Frame
           </button>
           <button
-            onClick={() => { setActiveTab('idcard'); setImageSrc(null); }}
-            className={`px-6 py-2.5 rounded-pill text-sm font-medium transition-all ${
-              activeTab === 'idcard'
-                ? 'bg-primary text-on-primary shadow-sm'
-                : 'text-body hover:text-ink'
+            onClick={() => { setFormat('b'); setImageSrc(null); }}
+            className={`px-6 py-2.5 rounded-pill text-sm font-semibold transition-all cursor-pointer ${
+              format === 'b'
+                ? 'bg-brand-forest text-brand-white shadow-sm'
+                : 'text-mute hover:text-brand-forest'
             }`}
           >
             Format B: Builder ID Card
@@ -200,21 +159,23 @@ export default function FrameGenerator() {
         </div>
       </div>
 
+      {/* Main Grid Interface */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Hand: Controls & Input form */}
+        {/* Left Side: Configuration Controls */}
         <div className="lg:col-span-7 bg-canvas border border-hairline rounded-lg p-6 custom-shadow-md">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-link" />
-            {activeTab === 'pfp' ? 'Configure PFP Frame' : 'Configure Builder ID Card'}
+          <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-brand-forest">
+            <Sparkles className="w-5 h-5 text-brand-pink animate-pulse" />
+            {format === 'a' ? 'Configure Profile Frame' : 'Configure Builder Card'}
           </h2>
 
-          {/* Photo Uploader */}
+          {/* Interactive Drag & Drop Zone / Crop Editor */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-body mb-2">Upload Profile Photo</label>
+            <label className="block text-sm font-semibold text-brand-forest mb-2">Upload Profile Photo</label>
+            
             {!imageSrc ? (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-hairline-strong/30 hover:border-link rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer transition-colors bg-canvas-soft group"
+                className="border-2 border-dashed border-hairline-strong/30 hover:border-brand-pink/60 rounded-lg p-10 flex flex-col items-center justify-center cursor-pointer transition-all bg-canvas-soft group"
               >
                 <input
                   type="file"
@@ -223,81 +184,90 @@ export default function FrameGenerator() {
                   accept="image/*,.heic"
                   className="hidden"
                 />
-                {loading ? (
-                  <Loader2 className="w-10 h-10 text-mute animate-spin mb-3" />
-                ) : (
-                  <Upload className="w-10 h-10 text-mute group-hover:text-link mb-3 transition-colors" />
-                )}
-                <p className="text-sm font-medium text-ink">
-                  {loading ? 'Processing Image (HEIC support active)...' : 'Click or Drag to Upload'}
-                </p>
-                <p className="text-xs text-mute mt-1">PNG, JPG, WEBP, or HEIC (from iPhone)</p>
+
+                <div className="flex flex-col items-center text-center pointer-events-none">
+                  {loading ? (
+                    <Loader2 className="w-8 h-8 text-brand-pink animate-spin mb-4" />
+                  ) : (
+                    <div className="mb-4 p-3 bg-canvas-soft-2 border border-hairline rounded-full group-hover:scale-110 transition-transform">
+                      <Upload className="w-6 h-6 text-brand-forest group-hover:text-brand-pink transition-colors" />
+                    </div>
+                  )}
+                  <p className="text-sm font-semibold text-brand-forest">
+                    {loading ? 'Processing HEIC image...' : 'Click or Drag to Upload'}
+                  </p>
+                  <p className="text-xs text-mute mt-1">Supports PNG, JPEG, WEBP, or HEIC format</p>
+                </div>
               </div>
             ) : (
-              <div className="relative h-64 w-full bg-canvas-soft-2 rounded-lg overflow-hidden border border-hairline">
-                <EasyCrop
-                  image={imageSrc}
-                  crop={crop}
-                  zoom={zoom}
-                  aspect={1}
-                  cropShape={activeTab === 'pfp' ? 'round' : 'rect'}
-                  showGrid={false}
-                  onCropChange={setCrop}
-                  onCropComplete={handleCropComplete}
-                  onZoomChange={setZoom}
-                />
-              </div>
-            )}
-
-            {imageSrc && (
-              <div className="mt-4 flex items-center gap-4">
-                <div className="flex-1">
-                  <label className="block text-xs font-mono text-mute mb-1">ZOOM CONTROLS</label>
-                  <input
-                    type="range"
-                    min={1}
-                    max={3}
-                    step={0.1}
-                    value={zoom}
-                    onChange={(e) => setZoom(parseFloat(e.target.value))}
-                    className="w-full h-1.5 bg-canvas-soft-2 rounded-lg appearance-none cursor-pointer accent-primary"
+              <div className="space-y-4">
+                <div className="relative h-72 w-full bg-canvas-soft-2 rounded-lg overflow-hidden border border-hairline">
+                  <EasyCrop
+                    image={imageSrc}
+                    crop={crop}
+                    zoom={zoom}
+                    aspect={1}
+                    cropShape={format === 'a' ? 'round' : 'rect'}
+                    showGrid={false}
+                    onCropChange={setCrop}
+                    onCropComplete={handleCropComplete}
+                    onZoomChange={setZoom}
                   />
                 </div>
-                <button
-                  onClick={() => { setImageSrc(null); setZoom(1); }}
-                  className="px-4 py-2 border border-hairline rounded-sm text-sm font-medium hover:bg-canvas-soft transition-colors"
-                >
-                  Change Photo
-                </button>
+
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <label className="block text-xs font-mono text-mute mb-1 font-bold">ZOOM & PAN CONTROLS</label>
+                    <input
+                      type="range"
+                      min={1}
+                      max={3}
+                      step={0.05}
+                      value={zoom}
+                      onChange={(e) => setZoom(parseFloat(e.target.value))}
+                      className="w-full h-1.5 bg-canvas-soft-2 rounded-lg appearance-none cursor-pointer accent-brand-pink"
+                    />
+                  </div>
+                  <button
+                    onClick={() => { setImageSrc(null); setZoom(1); }}
+                    className="px-4 py-2 border border-hairline rounded-sm text-xs font-bold text-brand-forest hover:bg-canvas-soft transition-colors cursor-pointer"
+                  >
+                    Change Image
+                  </button>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Card Meta Form (Format B only) */}
-          {activeTab === 'idcard' && (
-            <div className="space-y-4 border-t border-hairline pt-6">
+          {/* Input Details (Format B Only) */}
+          {format === 'b' && (
+            <div className="space-y-5 border-t border-hairline pt-6">
+              {/* Name Input */}
               <div>
-                <label htmlFor="builder-name" className="block text-sm font-medium text-body mb-1.5">Builder Name</label>
+                <label className="block text-sm font-semibold text-brand-forest mb-1.5 flex items-center gap-1.5">
+                  <User className="w-4 h-4 text-mute" /> Full Name
+                </label>
                 <input
-                  id="builder-name"
                   type="text"
-                  placeholder="e.g. Varun"
+                  placeholder="e.g. Varun Hunakunti"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full border border-hairline rounded-sm px-3 py-2 text-sm bg-canvas focus:outline-none focus:border-link transition-colors"
+                  className="w-full border border-hairline rounded-sm px-3.5 py-2 text-sm bg-canvas focus:outline-none focus:border-brand-pink transition-colors text-brand-forest font-medium"
                 />
               </div>
 
+              {/* Role & Title Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="builder-role" className="block text-sm font-medium text-body mb-1.5">Stack / Primary Role</label>
+                  <label className="block text-sm font-semibold text-brand-forest mb-1.5 flex items-center gap-1.5">
+                    <Briefcase className="w-4 h-4 text-mute" /> Primary Stack
+                  </label>
                   <select
-                    id="builder-role"
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
-                    className="w-full border border-hairline rounded-sm px-3 py-2 text-sm bg-canvas focus:outline-none focus:border-link transition-colors"
+                    className="w-full border border-hairline rounded-sm px-3 py-2 text-sm bg-canvas focus:outline-none focus:border-brand-pink transition-colors text-brand-forest font-medium"
                   >
-                    {ROLES.map(r => (
+                    {ROLES.map((r) => (
                       <option key={r.id} value={r.id}>{r.label}</option>
                     ))}
                   </select>
@@ -305,20 +275,19 @@ export default function FrameGenerator() {
 
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label htmlFor="builder-title" className="block text-sm font-medium text-body">Fun Builder Title</label>
-                    <button
+                    <label className="block text-sm font-semibold text-brand-forest">Hacker Title</label>
+                    <button 
                       onClick={handleRerollTitle}
-                      className="text-xs text-link hover:text-link-deep flex items-center gap-1 font-medium"
+                      className="text-xs text-brand-pink hover:text-link-deep flex items-center gap-1 font-bold transition-colors cursor-pointer"
                     >
-                      <RefreshCw className="w-3 h-3" /> Reroll
+                      <RefreshCw className="w-3 h-3" /> Auto Reroll
                     </button>
                   </div>
                   <input
-                    id="builder-title"
                     type="text"
-                    value={funTitle}
-                    onChange={(e) => setFunTitle(e.target.value)}
-                    className="w-full border border-hairline rounded-sm px-3 py-2 text-sm bg-canvas focus:outline-none focus:border-link transition-colors"
+                    value={customTitle}
+                    onChange={(e) => setCustomTitle(e.target.value)}
+                    className="w-full border border-hairline rounded-sm px-3.5 py-2 text-sm bg-canvas focus:outline-none focus:border-brand-pink transition-colors text-brand-forest font-medium"
                   />
                 </div>
               </div>
@@ -329,49 +298,35 @@ export default function FrameGenerator() {
           <div className="mt-8 pt-6 border-t border-hairline flex flex-col sm:flex-row gap-4">
             <button
               onClick={handleDownload}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-on-primary py-3 px-6 rounded-pill font-medium hover:bg-opacity-90 active:scale-[0.98] transition-all custom-shadow-sm"
+              disabled={!imageSrc}
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-brand-pink text-white py-3.5 px-6 rounded-pill font-bold hover:bg-opacity-95 disabled:opacity-50 transition-all custom-shadow-sm cursor-pointer border border-brand-pink/20"
             >
-              <Download className="w-4 h-4" /> Download High-Res PNG
-            </button>
-            <button
-              onClick={handleShareToX}
-              disabled={shareLoading}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-[#1d9bf0] text-white py-3 px-6 rounded-pill font-medium hover:bg-opacity-90 active:scale-[0.98] disabled:bg-opacity-70 transition-all custom-shadow-sm"
-            >
-              {shareLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> Uploading card...
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                  </svg>
-                  Share to X (#FrameInGoa)
-                </>
-              )}
+              <Download className="w-4 h-4" /> Download Design
             </button>
           </div>
         </div>
 
-        {/* Right Hand: Canvas Live Preview */}
+        {/* Right Side: Preview Frame Container */}
         <div className="lg:col-span-5 flex flex-col items-center">
-          <div className="w-full max-w-sm sticky top-8">
-            <p className="text-xs font-mono text-mute mb-2 uppercase tracking-wide text-center">Live Generated Preview</p>
+          <div className="w-full max-w-sm sticky top-24">
+            <p className="text-xs font-mono text-mute mb-3 uppercase tracking-wider text-center font-bold">Live Preview Window</p>
             
-            {/* Aspect Ratio Box */}
-            <div className={`w-full overflow-hidden bg-canvas-soft-2 rounded-lg border border-hairline custom-shadow-lg flex items-center justify-center ${
-              activeTab === 'pfp' ? 'aspect-square' : 'aspect-[2/3]'
+            <div className={`w-full overflow-hidden bg-canvas border border-hairline custom-shadow-lg flex flex-col items-center justify-center transition-all ${
+              format === 'a' ? 'aspect-square' : 'aspect-[2/3]'
             }`}>
-              <canvas
-                ref={canvasRef}
-                className="w-full h-full object-contain"
-              />
+              {imageSrc ? (
+                <canvas
+                  ref={canvasRef}
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <div className="flex flex-col items-center p-8 text-center pointer-events-none">
+                  <ImageIcon className="w-10 h-10 text-mute mb-3 animate-pulse" />
+                  <p className="text-sm font-semibold text-brand-forest">No image uploaded yet</p>
+                  <p className="text-xs text-mute mt-1">Upload a photo to see the live frame rendering</p>
+                </div>
+              )}
             </div>
-            
-            <p className="text-xs text-mute mt-3 text-center">
-              * The download will output a crystal-clear, high-resolution image file.
-            </p>
           </div>
         </div>
       </div>
