@@ -1,46 +1,35 @@
-# Astro Starter Kit: Basics
+# HH Goa Frame Generator
 
-```sh
-npm create astro@latest -- --template basics
-```
+A modern, high-performance web application designed for the HackHind Goa 2026 hackathon. This tool allows users to instantly generate premium circular PFP frames and custom Builder ID badges entirely client-side, with seamless support for iPhone HEIC images, dynamic title generation, direct file downloads, and integrated X (Twitter) sharing.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Tech Stack & Libraries
+- **React + Vite**: Fast, interactive single-page application framework.
+- **Tailwind CSS v4**: Stark developer visual styling inspired by Vercel's clean aesthetic.
+- **Lucide React**: Lightweight vector icons.
+- **`react-easy-crop`**: Fluid crop and zoom interactions supporting mobile touch/pinch gestures.
+- **`heic2any`**: Client-side conversion of HEIC images from iPhones.
+- **Supabase Storage**: Hosting generated cards publicly to power dynamic X social cards.
+- **Astro Server (SSR)**: Dynamic page OG meta headers generation on the edge.
 
-## 🚀 Project Structure
+## Project Structure
+- `src/components`: Custom UI controls and input components.
+- `src/canvas`: HTML5 Canvas drawing engines.
+- `src/hooks`: Custom utility hooks.
+- `src/utils`: Helper functions.
+- `src/data`: Static datasets.
+- `src/services`: API connection wrappers.
+- `src/assets`: Local image elements and styling.
 
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
-```
-
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+## Local Development
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Start the development server:
+   ```bash
+   npm run dev
+   ```
+3. Build for production:
+   ```bash
+   npm run build
+   ```

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import EasyCrop from 'react-easy-crop';
 import { Upload, Download, RefreshCw, Check, Sparkles, Image as ImageIcon, Loader2 } from 'lucide-react';
-import { renderPFPFrame, renderIDCard, getFunTitle } from './canvasEngine';
+import { renderPFPFrame, renderIDCard, getFunTitle } from '../canvas/canvasEngine';
 import { supabase, uploadFrame } from './supabase';
 
 const ROLES = [
