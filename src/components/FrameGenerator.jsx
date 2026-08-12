@@ -12,7 +12,7 @@ import symbolImg from '../assets/symbol.png';
 const ERROR_MESSAGES = {
   // Upload / file selection errors
   UNSUPPORTED_TYPE:    "That file type isn't supported. Please upload a JPG, PNG, or HEIC photo.",
-  FILE_TOO_LARGE:      (mb) => `That file is ${mb} MB — a bit too big. Please upload a photo under 20 MB.`,
+  FILE_TOO_LARGE:      (mb) => `That file is ${mb} MB — a bit too big. Please upload a photo under 40 MB.`,
   INVALID_IMAGE:       "We couldn't read that image. It may be corrupted — try saving it as a JPG or PNG and uploading again.",
   HEIC_FAILED:         "Couldn't convert your iPhone photo (HEIC). Try exporting it as a JPG from your Photos app first.",
   // Canvas / generation errors
@@ -129,8 +129,8 @@ export default function FrameGenerator() {
     };
   }, []);
 
-  // Max file size: 20MB
-  const MAX_FILE_SIZE_MB = 20;
+  // Max file size: 40MB
+  const MAX_FILE_SIZE_MB = 40;
   const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
   // Load uploaded image element
@@ -581,7 +581,7 @@ export default function FrameGenerator() {
                   ref={fileInputRef}
                   onChange={handleFileChange}
                   accept="image/*,.heic,.heif"
-                  aria-label="Upload profile photo (JPG, PNG or HEIC, max 20 MB)"
+                  aria-label="Upload profile photo (JPG, PNG or HEIC, max 40 MB)"
                   className="sr-only"
                 />
                 <input
