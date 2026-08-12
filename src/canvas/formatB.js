@@ -60,7 +60,7 @@ export function drawFormatB(canvas, { image, crop, name, role, builderTitle, tem
   ctx.fillStyle = "#F1EBDD";
   ctx.textAlign = "left";
   ctx.font = `700 ${22 * scaleX}px 'Poppins', sans-serif`;
-  ctx.fillText(name || "Arjun Sharma", titleX, nameY + 36 * scaleY); // Shifted down from + 22 * scaleY
+  ctx.fillText(name || "", titleX, nameY + 36 * scaleY); // Shifted down from + 22 * scaleY
 
   // Stack / Role value (below pre-printed STACK / ROLE label at 196 * scaleY)
   const stackY = 196 * scaleY;
@@ -85,12 +85,22 @@ export function drawFormatB(canvas, { image, crop, name, role, builderTitle, tem
   // Builder Title value (below pre-printed BUILDER TITLE label at 196 * scaleY)
   const bTitleX = 414 * scaleX;
   const displayTitle = builderTitle || getFunTitle(role || "Frontend Engineer");
+  
+  const maxTextWidth = 110 * scaleX;
+  let fontSize = 28;
+  ctx.font = `700 ${fontSize * scaleX}px 'Caveat', cursive, sans-serif`;
+  let tWidth = ctx.measureText(displayTitle).width;
+  
+  if (tWidth > maxTextWidth) {
+    fontSize = Math.max(14, Math.floor(28 * (maxTextWidth / tWidth)));
+    ctx.font = `700 ${fontSize * scaleX}px 'Caveat', cursive, sans-serif`;
+    tWidth = ctx.measureText(displayTitle).width;
+  }
+
   ctx.fillStyle = "#F1EBDD";
-  ctx.font = `700 ${28 * scaleX}px 'Caveat', cursive, sans-serif`;
-  ctx.fillText(displayTitle, bTitleX - 2 * scaleX, stackY + 39 * scaleY); // Shifted down to stackY + 39 * scaleY to align vertical center with pill text
+  ctx.fillText(displayTitle, bTitleX - 2 * scaleX, stackY + 39 * scaleY);
 
   // Draw symbol image next to Builder Title
-  const tWidth = ctx.measureText(displayTitle).width;
   const waveX = bTitleX - 2 * scaleX + tWidth + 8 * scaleX;
   const waveY = stackY + 22 * scaleY; // Shifted down to stackY + 22 * scaleY to remain centered with title text
 

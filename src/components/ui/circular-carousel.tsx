@@ -25,7 +25,7 @@ const VISIBLE_COUNT = 5;
 const RADIUS_X = 320;
 const RADIUS_Y = 140;
 
-function getItemPosition(index: number, activeIndex: number, total: number) {
+function getItemPosition(index: number, activeIndex: number, total: number, rx: number, ry: number) {
   const offset = index - activeIndex;
   const half = Math.floor(VISIBLE_COUNT / 2);
   let adjustedOffset = offset;
@@ -36,13 +36,19 @@ function getItemPosition(index: number, activeIndex: number, total: number) {
   if (Math.abs(adjustedOffset) > half * 2) return null;
 
   const angle = (adjustedOffset / VISIBLE_COUNT) * Math.PI;
-  const x = Math.sin(angle) * RADIUS_X;
-  const y = -Math.cos(angle) * RADIUS_Y;
+  const x = Math.sin(angle) * rx;
+  const y = -Math.cos(angle) * ry;
 
   const distance = Math.abs(adjustedOffset);
   const maxDistance = half + 1;
-  const scale = Math.max(0, 1 - (distance / maxDistance) * 0.3);
-  const opacity = Math.max(0.3, 1 - (distance / maxDistance) * 0.7);
+  const isMobile = rx < 200;
+  
+  const scaleDrop = isMobile ? 0.6 : 0.3; 
+  const opacityDrop = isMobile ? 0.9 : 0.7;
+  const minOpacity = isMobile ? 0.05 : 0.3;
+
+  const scale = Math.max(0, 1 - (distance / maxDistance) * scaleDrop);
+  const opacity = Math.max(minOpacity, 1 - (distance / maxDistance) * opacityDrop);
   const zIndex = VISIBLE_COUNT - distance;
 
   return { x, y, scale, opacity, zIndex, adjustedOffset };
@@ -59,8 +65,25 @@ export function CircularCarousel({
   const [internalIndex, setInternalIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [radii, setRadii] = useState({ rx: RADIUS_X, ry: RADIUS_Y });
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const updateRadii = () => {
+      const width = window.innerWidth;
+      if (width < 640) {
+        setRadii({ rx: width * 0.35, ry: 90 });
+      } else if (width < 1024) {
+        setRadii({ rx: width * 0.25, ry: 110 });
+      } else {
+        setRadii({ rx: RADIUS_X, ry: RADIUS_Y });
+      }
+    };
+    updateRadii();
+    window.addEventListener("resize", updateRadii);
+    return () => window.removeEventListener("resize", updateRadii);
+  }, []);
 
   const activeIndex = controlledIndex ?? internalIndex;
   const total = items.length;
@@ -119,7 +142,7 @@ export function CircularCarousel({
       <div className="relative h-[380px] w-full max-w-3xl">
         <AnimatePresence mode="popLayout">
           {items.map((item, i) => {
-            const pos = getItemPosition(i, activeIndex, total);
+            const pos = getItemPosition(i, activeIndex, total, radii.rx, radii.ry);
             if (!pos) return null;
 
             const isActive = i === activeIndex;
@@ -146,7 +169,7 @@ export function CircularCarousel({
                 aria-selected={isActive}
                 role="option"
                 className={cn(
-                  "absolute left-1/2 top-1/2 flex h-40 w-64 -translate-x-1/2 -translate-y-1/2 cursor-pointer flex-col items-start justify-between rounded-2xl border border-[#F4C400]/50 bg-[#062E22] p-5 backdrop-blur-sm transition-shadow duration-300",
+                  "absolute left-1/2 top-1/2 flex h-auto min-h-[10rem] w-[75vw] max-w-[16rem] sm:max-w-none sm:h-40 sm:w-64 -translate-x-1/2 -translate-y-1/2 cursor-pointer flex-col items-start justify-center gap-3 rounded-2xl border border-[#F4C400]/50 bg-[#062E22] p-5 backdrop-blur-sm transition-shadow duration-300",
                   isActive
                     ? "shadow-[0_20px_60px_-12px_rgba(6,46,34,0.8)]"
                     : "shadow-[0_8px_24px_-4px_rgba(6,46,34,0.4)] hover:shadow-[0_12px_32px_-4px_rgba(6,46,34,0.6)]",
@@ -171,7 +194,7 @@ export function CircularCarousel({
                   </h3>
                   <p
                     className={cn(
-                      "mt-2 line-clamp-3 text-sm leading-relaxed transition-colors duration-300 font-mono",
+                      "mt-2 text-sm leading-relaxed transition-colors duration-300 font-mono",
                       isActive ? "text-[#F9F6EE]/90" : "text-[#F9F6EE]/60",
                     )}
                   >

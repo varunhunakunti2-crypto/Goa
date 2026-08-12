@@ -169,7 +169,7 @@ export default function FrameGenerator() {
         drawFormatB(canvasRef.current, { 
           image: imgElement, 
           crop: croppedAreaPixels, 
-          name: name || 'Arjun Sharma', 
+          name: name, 
           role: roleLabel, 
           builderTitle: customTitle,
           templateImage: templateImgElement,

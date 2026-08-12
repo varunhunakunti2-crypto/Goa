@@ -75,7 +75,13 @@ function App() {
         <button
           id="btn-back"
           className="btn-back"
-          onClick={() => window.history.back()}
+          onClick={() => {
+            if (window.history.length > 2) {
+              window.history.back();
+            } else {
+              window.location.reload();
+            }
+          }}
           aria-label="Go back"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -104,12 +110,12 @@ function App() {
               <div className="relative text-left flex flex-col items-start">
                 {/* HACKER HOUSE gold serif block (Single Line) */}
                 <div className="leading-none font-black text-brand-gold tracking-tight" style={{ fontFamily: "'Cinzel', serif" }}>
-                  <div className="text-[42px] sm:text-[72px] md:text-[96px] uppercase font-black whitespace-nowrap drop-shadow-2xl">Hacker House</div>
+                  <div className="text-[32px] min-[400px]:text-[42px] sm:text-[72px] md:text-[96px] uppercase font-black whitespace-nowrap drop-shadow-2xl">Hacker House</div>
                 </div>
                 
                 {/* Devanagari overlapping text "गोवा" */}
                 <div 
-                  className="absolute left-[38%] top-[32px] sm:top-[48px] md:top-[58px] text-[48px] sm:text-[84px] md:text-[112px] font-normal text-brand-pink select-none pointer-events-none transform -rotate-12 active:scale-105 transition-transform" 
+                  className="absolute left-[38%] top-[24px] min-[400px]:top-[32px] sm:top-[48px] md:top-[58px] text-[36px] min-[400px]:text-[48px] sm:text-[84px] md:text-[112px] font-normal text-brand-pink select-none pointer-events-none transform -rotate-12 active:scale-105 transition-transform" 
                   style={{ fontFamily: "'Yatra One', cursive", textShadow: '0 4px 20px rgba(0,0,0,0.5)' }}
                 >
                   गोवा
@@ -139,15 +145,14 @@ function App() {
       >
 
         {/* Full illustration — sits immediately below the text in normal flow */}
-        <div className="w-full relative z-0 rounded-t-[40px] sm:rounded-t-[80px] overflow-hidden" style={{ boxShadow: '0 -10px 40px rgba(0,0,0,0.1)' }}>
+        <div className="w-full relative z-0 rounded-t-[40px] sm:rounded-t-[80px] overflow-hidden min-h-[550px] flex items-center justify-center" style={{ boxShadow: '0 -10px 40px rgba(0,0,0,0.1)' }}>
           <img
             src={manifestBg}
             alt="Goa beach illustration"
-            className="w-full block"
-            style={{ width: '100%', height: 'auto', display: 'block' }}
+            className="absolute inset-0 w-full h-full object-cover object-bottom"
           />
           {/* Circular Carousel Overlay */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
+          <div className="relative w-full z-10 py-12 flex items-center justify-center pointer-events-auto">
              <CircularCarousel items={carouselItems} />
           </div>
         </div>
