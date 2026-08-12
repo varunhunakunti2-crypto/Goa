@@ -1,44 +1,45 @@
-import React from 'react';
+import React, { useState } from 'react';
 import FrameGenerator from './components/FrameGenerator.jsx';
 import SharePage from './components/SharePage.jsx';
 import { CircularCarousel } from './components/ui/circular-carousel.tsx';
 import manifestBg from './assets/Gemini_Generated_Image_vppp0tvppp0tvppp.png';
+import Loader from './utils/PreLoader.tsx';
 
 const carouselItems = [
   {
     id: "1",
-    title: "Nebula Engine",
-    description: "Real-time rendering pipeline built for immersive 3D worlds.",
+    title: "THE BEGINNING",
+    description: "Hacker House Goa began in 2024 as a new approach to hackathons: instead of building for 24–48 hours.",
     tag: "Graphics",
   },
   {
     id: "2",
-    title: "Quantum Sync",
-    description: "Instant state replication across every connected device.",
+    title: "HH GOA 2024",
+    description: "6 days of building, collaboration and entrepreneurship.",
     tag: "Realtime",
   },
   {
     id: "3",
-    title: "Aurora Analytics",
-    description: "Insightful dashboards that surface trends as they happen.",
+    title: "WHAT THEY BUILT",
+    description: "Builders worked on DeFi, identity, privacy, gaming, AI, payments, climate and developer tools.",
     tag: "Data",
   },
   {
     id: "4",
-    title: "Pulse Notifications",
-    description: "Timely, contextual alerts that keep users in the loop.",
+    title: "THE ECOSYSTEM",
+    description: "HH Goa connected builders with protocols, mentors, speakers, sponsors and potential funding.",
     tag: "Messaging",
   },
   {
     id: "5",
-    title: "Vault Security",
-    description: "End-to-end encryption with zero-trust access controls.",
+    title: "THE EVOLUTION",
+    description: "The idea evolved from a traditional hackathon → residential builder house → product-focused experience.",
     tag: "Security",
   },
   {
     id: "6",
-    title: "Forge CI",
-    description: "Blazing-fast build and deploy pipelines out of the box.",
+    title: "HH GOA 2026",
+    description: "October 28–31, 2026: HH Goa returns with a stronger AI × Crypto focus.",
     tag: "DevOps",
   },
 ];
@@ -47,9 +48,13 @@ function App() {
   const path = typeof window !== 'undefined' ? window.location.pathname : '';
   const isSharePage = path.startsWith('/share/');
   const shareId = isSharePage ? path.split('/').pop() : null;
+  const [isAppVisible, setIsAppVisible] = useState(false);
 
   return (
-    <div className="flex flex-col min-h-screen bg-transparent text-ink select-none antialiased">
+    <>
+      <Loader onStartFadeOut={() => setIsAppVisible(true)} />
+      {isAppVisible && (
+        <div className="flex flex-col min-h-screen bg-transparent text-ink select-none antialiased">
       {/* Skip to main content — keyboard / screen-reader shortcut */}
       <a
         href="#generator"
@@ -71,25 +76,23 @@ function App() {
       </header>
 
       {/* Back Button — below the header bar */}
-      <div className="w-full px-6 md:px-12 pt-4 pb-0">
-        <button
-          id="btn-back"
-          className="btn-back"
-          onClick={() => {
-            if (window.history.length > 2) {
-              window.history.back();
-            } else {
-              window.location.reload();
-            }
-          }}
-          aria-label="Go back"
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path d="M9 2L4 7L9 12" stroke="#F4C400" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          Back
-        </button>
-      </div>
+      {isSharePage && (
+        <div className="w-full px-6 md:px-12 pt-4 pb-0">
+          <button
+            id="btn-back"
+            className="btn-back"
+            onClick={() => {
+              window.location.href = '/';
+            }}
+            aria-label="Go back"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M9 2L4 7L9 12" stroke="#F4C400" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Back
+          </button>
+        </div>
+      )}
 
 
 
@@ -173,7 +176,9 @@ function App() {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+      )}
+    </>
   );
 }
 
