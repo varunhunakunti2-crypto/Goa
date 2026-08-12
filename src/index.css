@@ -1,29 +1,29 @@
 @import "tailwindcss";
 
 @theme {
-  /* Brand color tokens */
-  --color-brand-forest: #073F2B;
-  --color-brand-deep: #062E22;
-  --color-brand-yellow: #F4C400;
-  --color-brand-gold: #DFAF00;
-  --color-brand-pink: #E51E69;
-  --color-brand-cream: #F7F1E3;
-  --color-brand-white: #FFFFFF;
+  /* Brand color tokens from DESIGN.md */
+  --color-brand-forest: #0B3D2E;  /* Deep Forest Green (page/card background) */
+  --color-brand-deep: #062E22;    /* Darker Green for borders/frame edge */
+  --color-brand-yellow: #F4C400;  /* Golden Yellow */
+  --color-brand-gold: #E0A600;    /* Warm Gold / Mustard (text on dark bg) */
+  --color-brand-pink: #E8235A;    /* Pink / Magenta */
+  --color-brand-cream: #F7F1E3;   /* Cream / Off-white (light text on dark bg) */
+  --color-brand-white: #FFFFFF;   /* Pure White */
 
-  /* Map to semantic utilities */
-  --color-primary: var(--color-brand-forest);
-  --color-on-primary: var(--color-brand-white);
-  --color-ink: var(--color-brand-deep);
-  --color-body: #204b3d; /* Deeper tinted slate-green for soft readability */
-  --color-mute: #588073; /* Muted green-gray for labels */
-  --color-hairline: #e3dbcb; /* Cream-darkened hairline borders */
-  --color-hairline-strong: #c2b7a3;
+  /* Semantic utilities mapped for dark-green theme */
+  --color-primary: var(--color-brand-deep);
+  --color-on-primary: var(--color-brand-cream);
+  --color-ink: var(--color-brand-cream);       /* Default text = cream */
+  --color-body: var(--color-brand-cream);      /* Body text = cream */
+  --color-mute: #7aaf9d;                       /* Muted text = muted teal */
+  --color-hairline: #1c5e4b;                   /* Borders = medium green */
+  --color-hairline-strong: var(--color-brand-gold);
   
-  --color-canvas: var(--color-brand-white);
-  --color-canvas-soft: var(--color-brand-cream);
-  --color-canvas-soft-2: #f0ebd8; /* Tinted Cream secondary background */
+  --color-canvas: var(--color-brand-deep);     /* Card bg = darker green */
+  --color-canvas-soft: var(--color-brand-forest); /* Page bg = forest green */
+  --color-canvas-soft-2: #092c22;              /* Inset bg = darkest green */
   --color-link: var(--color-brand-pink);
-  --color-link-deep: #c41253;
+  --color-link-deep: #c01445;
   
   --font-sans: "Geist", "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
@@ -35,6 +35,11 @@
   --radius-xl: 16px;
   --radius-pill-sm: 64px;
   --radius-pill: 100px;
+
+  /* Animation durations */
+  --duration-quick:  150ms;
+  --duration-smooth: 300ms;
+  --duration-slow:   500ms;
 }
 
 html,
@@ -43,25 +48,232 @@ body,
   margin: 0;
   width: 100%;
   height: 100%;
-  background-color: var(--color-canvas-soft);
+  background-image: url('./assets/Screenshot 2026-08-12 194752.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
-/* Beautiful on-brand mesh gradient using forest green, golden yellow, pink, and deep green */
+/* ─── Mesh gradient background ─────────────────────────────────────────────── */
 .mesh-gradient-bg {
-  background: radial-gradient(at 0% 0%, rgba(244, 196, 0, 0.18) 0px, transparent 50%),
-              radial-gradient(at 50% 0%, rgba(7, 63, 43, 0.15) 0px, transparent 55%),
-              radial-gradient(at 100% 0%, rgba(229, 30, 105, 0.15) 0px, transparent 50%),
-              radial-gradient(at 50% 100%, rgba(6, 46, 34, 0.2) 0px, transparent 60%);
-  background-color: var(--color-canvas-soft);
+  background-image: url('./assets/Screenshot 2026-08-12 194752.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
-.custom-shadow-md {
-  box-shadow: 0px 2px 4px rgba(6, 46, 34, 0.05), 0px 8px 12px -8px rgba(6, 46, 34, 0.06);
+/* ─── Shadows ───────────────────────────────────────────────────────────────── */
+.custom-shadow-sm  { box-shadow: 0px 1px 2px rgba(6, 46, 34, 0.06); }
+.custom-shadow-md  { box-shadow: 0px 2px 4px rgba(6, 46, 34, 0.05), 0px 8px 12px -8px rgba(6, 46, 34, 0.06); }
+.custom-shadow-lg  { box-shadow: 0px 4px 6px rgba(6, 46, 34, 0.06), 0px 16px 24px -8px rgba(6, 46, 34, 0.08); }
+.custom-shadow-xl  { box-shadow: 0px 8px 16px rgba(6, 46, 34, 0.08), 0px 24px 48px -12px rgba(6, 46, 34, 0.12); }
+
+/* ─── Keyframes ─────────────────────────────────────────────────────────────── */
+
+/* Landing: elements slide up from 16px below */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.custom-shadow-lg {
-  box-shadow: 0px 4px 6px rgba(6, 46, 34, 0.06), 0px 16px 24px -8px rgba(6, 46, 34, 0.08);
+/* Panels: simple opacity transition */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Result reveal: gentle scale + fade */
+@keyframes result-pop {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Upload zone idle: very slow, subtle float — not distracting */
+@keyframes upload-float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-4px); }
+}
+
+/* Text blink: smooth fade in/out cycle */
+@keyframes text-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.15; }
+}
+
+/* ─── Animation utility classes ─────────────────────────────────────────────── */
+.animate-fade-up {
+  animation: fade-up var(--duration-slow) cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-fade-up-delay-1 {
+  animation: fade-up var(--duration-slow) cubic-bezier(0.22, 1, 0.36, 1) 100ms both;
+}
+.animate-fade-up-delay-2 {
+  animation: fade-up var(--duration-slow) cubic-bezier(0.22, 1, 0.36, 1) 220ms both;
+}
+.animate-fade-in {
+  animation: fade-in var(--duration-smooth) ease both;
+}
+.animate-result-pop {
+  animation: result-pop 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-upload-float {
+  animation: upload-float 3.2s ease-in-out infinite;
+}
+.animate-blink {
+  animation: text-blink 1.4s ease-in-out infinite;
+}
+
+/* ─── Upload zone drag-active glow ring ─────────────────────────────────────── */
+.upload-zone-drag-active {
+  border-color: var(--color-brand-pink) !important;
+  background-color: color-mix(in srgb, var(--color-brand-pink) 4%, var(--color-canvas-soft));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand-pink) 18%, transparent);
+  transform: scale(1.008);
+}
+
+/* ─── Button polish ──────────────────────────────────────────────────────────── */
+
+/* Primary pink — deepen + pink glow ring on hover */
+.btn-pink {
+  background-color: var(--color-brand-pink);
+  color: #fff;
+  transition: background-color var(--duration-quick) ease,
+              box-shadow var(--duration-quick) ease,
+              transform var(--duration-quick) ease;
+}
+.btn-pink:hover:not(:disabled) {
+  background-color: var(--color-link-deep);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand-pink) 25%, transparent),
+              0 4px 12px color-mix(in srgb, var(--color-brand-pink) 30%, transparent);
+  transform: translateY(-1px);
+}
+.btn-pink:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
+
+/* Ghost / secondary — gold-tinted bg + gold border glow on hover */
+.btn-ghost {
+  background-color: var(--color-canvas-soft-2);
+  color: var(--color-brand-cream);
+  border: 1px solid var(--color-hairline);
+  transition: background-color var(--duration-quick) ease,
+              border-color var(--duration-quick) ease,
+              box-shadow var(--duration-quick) ease,
+              transform var(--duration-quick) ease;
+}
+.btn-ghost:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--color-brand-yellow) 8%, var(--color-canvas-soft-2));
+  border-color: var(--color-brand-gold);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-brand-gold) 18%, transparent);
+  transform: translateY(-1px);
+}
+.btn-ghost:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
+
+/* X / dark share button */
+.btn-dark {
+  background-color: #0f0f0f;
+  color: #fff;
+  transition: background-color var(--duration-quick) ease,
+              box-shadow var(--duration-quick) ease,
+              transform var(--duration-quick) ease;
+}
+.btn-dark:hover:not(:disabled) {
+  background-color: #1c1c1c;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+  transform: translateY(-1px);
+}
+.btn-dark:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
+
+/* ─── Misc ───────────────────────────────────────────────────────────────────── */
+
+/* Smooth canvas/result panel transition */
+.panel-transition {
+  transition: opacity var(--duration-smooth) ease, transform var(--duration-smooth) ease;
+}
+
+/* ─── EasyCrop background fix ────────────────────────────────────────────────── */
+/* Default EasyCrop renders a black container. Override to match the card palette. */
+.reactEasyCrop_Container {
+  background: #1a1a1a !important;
+}
+/* The unselected area overlay: slightly darker than the crop window */
+.reactEasyCrop_CropArea {
+  border-color: #E1B70D !important;  /* gold border matches card frame */
+  box-shadow: 0 0 0 9999px rgba(6, 20, 14, 0.72) !important;
+}
+
+/* ─── Legibility Overrides for Dark Theme ────────────────────────────────────── */
+/* Force labels and text elements using brand-forest classes to be readable cream */
+.text-brand-forest {
+  color: #F7F1E3 !important;
+}
+.text-brand-deep {
+  color: #FFFFFF !important;
+}
+
+/* Force form inputs to have white text so typed text is fully visible */
+input, select, textarea {
+  color: #FFFFFF !important;
+}
+
+/* Ensure placeholder text has readable low-contrast cream color */
+input::placeholder {
+  color: #a2c4ba !important;
+  opacity: 0.8;
+}
+
+/* ─── Back Button — UIverse sliding fill (brand colours) ────────────────────── */
+.btn-back {
+  padding: 8px 18px;
+  border: 1px solid rgba(244, 196, 0, 0.45);
+  border-radius: 10px;
+  color: #F4C400;
+  background: transparent;
+  position: relative;
+  font-weight: 700;
+  font-size: 13px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 1;
+  overflow: hidden;
+  box-shadow: 4px 8px 19px -3px rgba(0, 0, 0, 0.27);
+  transition: color 250ms, border-color 250ms;
+}
+
+.btn-back::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0;
+  border-radius: 10px;
+  background-color: #F4C400;
+  z-index: -1;
+  box-shadow: 4px 8px 19px -3px rgba(0, 0, 0, 0.27);
+  transition: width 250ms ease;
+}
+
+.btn-back:hover {
+  color: #062E22;
+  border-color: #F4C400;
+}
+
+.btn-back:hover::before {
+  width: 100%;
+}
+
+.btn-back svg path {
+  transition: stroke 250ms;
+}
+
+.btn-back:hover svg path {
+  stroke: #062E22;
 }

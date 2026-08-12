@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 380" width="100%" height="100%">
+  <defs>
+    <radialGradient id="sun-burst" cx="80%" cy="25%" r="65%">
+      <stop offset="0%" stop-color="#fff8a6" />
+      <stop offset="35%" stop-color="#f0b80e" />
+      <stop offset="100%" stop-color="#032b18" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Sun Glow -->
+  <circle cx="360" cy="80" r="140" fill="url(#sun-burst)" />
+
+  <!-- Sun Rays -->
+  <g stroke="#f0b80e" stroke-width="2" opacity="0.45">
+    <line x1="360" y1="80" x2="200" y2="20" />
+    <line x1="360" y1="80" x2="180" y2="80" />
+    <line x1="360" y1="80" x2="210" y2="150" />
+    <line x1="360" y1="80" x2="260" y2="200" />
+    <line x1="360" y1="80" x2="310" y2="230" />
+  </g>
+
+  <!-- Solid Sun Disk -->
+  <circle cx="360" cy="80" r="42" fill="#f0b80e" />
+
+  <!-- Mountains -->
+  <polygon points="120,200 190,100 260,200" fill="#2d523b" />
+  <polygon points="190,200 270,75 350,200" fill="#1b4029" />
+  <!-- Snow/Bright Tops -->
+  <polygon points="190,100 205,125 175,125" fill="#e2f3e8" opacity="0.8" />
+  <polygon points="270,75 288,105 252,105" fill="#e2f3e8" opacity="0.8" />
+
+  <!-- Winding River -->
+  <path d="M 270,200 Q 250,240 290,270 T 360,360 L 450,380 L 450,200 Z" fill="#2185a6" opacity="0.85" />
+  <path d="M 270,200 Q 250,240 290,270 T 360,360" stroke="#7ad0eb" stroke-width="6" fill="none" />
+
+  <!-- Tropical Trees / Forest Canopy -->
+  <circle cx="210" cy="270" r="28" fill="#e19d14" />
+  <circle cx="240" cy="260" r="32" fill="#2ecc71" />
+  <circle cx="270" cy="275" r="25" fill="#e74c3c" />
+  <circle cx="300" cy="265" r="30" fill="#3498db" />
+
+  <!-- Goan Beach House / Shack -->
+  <rect x="260" y="270" width="85" height="45" fill="#f39c12" rx="4" />
+  <polygon points="250,270 302,235 355,270" fill="#c0392b" />
+  <rect x="285" y="285" width="18" height="30" fill="#5d4037" />
+
+  <!-- Palm Trees (Right Side) -->
+  <!-- Tree 1 -->
+  <path d="M 400,340 Q 380,240 410,160" stroke="#5d4037" stroke-width="10" fill="none" />
+  <path d="M 410,160 Q 350,130 330,160 M 410,160 Q 370,110 360,80 M 410,160 Q 430,100 450,120 M 410,160 Q 450,150 460,190" stroke="#1b5e20" stroke-width="6" fill="none" />
+  <!-- Tree 2 -->
+  <path d="M 430,340 Q 420,260 440,190" stroke="#4e342e" stroke-width="8" fill="none" />
+</svg>
